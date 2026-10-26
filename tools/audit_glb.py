@@ -23,6 +23,7 @@ def inspect(path: Path) -> dict:
         "file": str(path),
         "exists": path.is_file(),
         "valid_glb_header": False,
+        "structurally_usable_candidate": False,
         "version": None,
         "declared_length": None,
         "actual_length": path.stat().st_size if path.is_file() else 0,
