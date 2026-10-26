@@ -239,6 +239,17 @@ class AvatarViewModel(application: Application) : AndroidViewModel(application) 
         recordDiagnostic("Configuration saved to local storage")
     }
 
+    fun previewAvatarState(avatarState: AvatarState) {
+        state = state.copy(avatarState = avatarState, status = "Previewing ${avatarState.label} animation")
+    }
+
+    fun testVoiceSpeech(text: String = "Hello! I am Nova, your 3D AI companion. All systems are fully operational.") {
+        stopSpeaking()
+        state = state.copy(avatarState = AvatarState.SPEAKING, status = "Speaking voice preview")
+        speaker.speak(text, state.settings)
+    }
+
+
 
     fun importCharacter(uri: Uri) {
         scope.launch {
