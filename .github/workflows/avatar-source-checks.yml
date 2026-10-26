@@ -37,6 +37,9 @@ jobs:
               print(f"Syntax OK: {path}")
           PY
 
+      - name: Run GLB audit unit tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+
       - name: Check required avatar pipeline files
         run: |
           test -f blender/build_nova_prototype.py
