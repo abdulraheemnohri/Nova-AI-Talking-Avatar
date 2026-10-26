@@ -1,15 +1,26 @@
 # AI Talking Avatar (Nova) — Android Application
 
 ## Overview
-AI Talking Avatar (Nova) is a local-first, privacy-respecting Android application built with **Kotlin**, **Jetpack Compose**, and **Google Filament (3D real-time rendering)**. It features an interactive 3D assistant character with customizable rendering quality, voice recognition, text-to-speech output, lip-sync animation, and flexible AI engine adapters (`Offline Demo`, `Ollama Local Endpoint`, `Google LiteRT-LM CLI`, and `Google Gemini API`).
+AI Talking Avatar (Nova) is a local-first Android application built with **Kotlin**, **Jetpack Compose**, and **Google Filament** for real-time 3D rendering. It includes configurable AI adapters, voice input and speech output, persistent settings/history, avatar state handling and GLB asset loading.
 
-## Key Features
-- **Real-Time 3D Rendering:** Powered by Google Filament (`ModelViewer`, `FilamentRendererManager`, `GltfAssetLoader`), supporting `.glb` binary assets with camera orbit, zoom, lighting, and performance tiers.
-- **AI Engine Flexibility:** Connect to local Ollama endpoints (`http://localhost:11434`), LiteRT-LM CLI (`http://localhost:8080`), Google Gemini API (with `BuildConfig.GEMINI_API_KEY` or custom key overrides), or run fully offline in rules-based demo mode.
-- **Voice & Speech:** Speech-to-text input, Android Text-to-Speech output, voice rate/pitch controls, and real-time speech-synchronized jaw/lip motion.
-- **State Management & Animations:** Robust state machine (`IDLE`, `LISTENING`, `THINKING`, `SPEAKING`, `ERROR`, `PAUSED`) mapped to character animation clips.
-- **Comprehensive Settings & Diagnostics:** Per-adapter active toggles, hardware permission management, accessibility launcher, theme switching (`Dark Sci-Fi`, `Cyberpunk Cyan`, `OLED Ultra Dark`, `Light Modern`), and redacted runtime diagnostics.
+## Key features
+- **Real-time 3D rendering:** Filament and glTF loading for binary `.glb` assets, with rendering and lifecycle management.
+- **AI engine adapters:** Offline demo, local Ollama endpoint, LiteRT-LM CLI adapter and optional Gemini API adapter.
+- **Voice and speech:** Speech recognition and Android Text-to-Speech, with approximate mouth motion where supported.
+- **Avatar state mapping:** Idle, listening, thinking, speaking, error and paused states; clip selection depends on clips actually present in the asset.
+- **Settings and diagnostics:** AI/provider configuration, rendering options, permissions and diagnostic summaries.
 
-## Build & Test Instructions
-- Build Debug APK: `gradle assembleDebug`
-- Run Unit Tests: `gradle :app:testDebugUnitTest`
+## 3D asset production
+The app source tree does not currently include a verified production `assistant.glb`. Use the [Meshy + Blender production pipeline](docs/MESHY_BLENDER_PIPELINE.md) to create and validate a character. The dependency-free structural audit tool is `tools/audit_glb.py`.
+
+```bash
+python3 tools/audit_glb.py /path/to/nova.glb --json-out nova-audit.json
+```
+
+For production acceptance, also use Blender, the Khronos glTF Validator, and actual Android/Pixel playback tests. Structural inspection alone does not verify animation quality, skin deformation or phoneme-accurate lip-sync.
+
+## Build and test
+- Build debug APK: `gradle assembleDebug`
+- Run unit tests: `gradle :app:testDebugUnitTest`
+
+Run these commands in an Android SDK/Gradle environment. Results must be recorded from the environment where they were executed; this repository update does not claim a fresh Android build or Pixel-device test.
