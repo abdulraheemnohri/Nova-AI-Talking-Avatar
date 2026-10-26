@@ -102,8 +102,13 @@ class FilamentAvatarRenderer(private val surface: SurfaceView) {
     }
 
     fun loadModel(file: File, onLoaded: (Boolean, String) -> Unit) {
-        if (disposed || !file.exists() || !file.canRead()) {
-            onLoaded(false, "Character file is not readable.")
+        if (disposed) {
+            onLoaded(false, "Avatar renderer is no longer active.")
+            return
+        }
+        val preflight = GlbPreflight.validate(file)
+        if (!preflight.valid) {
+            onLoaded(false, preflight.message)
             return
         }
         modelFile = file
