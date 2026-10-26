@@ -79,7 +79,7 @@ def inspect(path: Path) -> dict:
             if document is not None:
                 report["warnings"].append("Multiple JSON chunks found.")
             try:
-                document = json.loads(chunk.decode("utf-8").rstrip(" \\t\\r\\n\\0"))
+                document = json.loads(chunk.decode("utf-8").rstrip(" \t\r\n\0"))
                 report["json_chunk_present"] = True
             except (UnicodeDecodeError, json.JSONDecodeError) as exc:
                 report["errors"].append(f"Could not parse JSON chunk: {exc}")
@@ -158,7 +158,7 @@ def main() -> int:
     output = json.dumps(report, indent=2, ensure_ascii=False)
     print(output)
     if args.json_out:
-        args.json_out.write_text(output + "\\n", encoding="utf-8")
+        args.json_out.write_text(output + "\n", encoding="utf-8")
     return 0 if report.get("structurally_usable_candidate") and not report["errors"] else 1
 
 
