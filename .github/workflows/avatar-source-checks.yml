@@ -1,0 +1,53 @@
+name: Avatar source checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile Python source without executing Blender
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+
+          files = sorted(Path(".").glob("**/*.py"))
+          files = [p for p in files if ".git" not in p.parts and "__pycache__" not in p.parts]
+          if not files:
+              raise SystemExit("No Python source files found")
+          for path in files:
+              ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+              print(f"Syntax OK: {path}")
+          PY
+
+      - name: Check required avatar pipeline files
+        run: |
+          test -f blender/build_nova_prototype.py
+          test -f blender/audit_nova_scene.py
+          test -f docs/MESHY_PROMPT.md
+          test -f docs/MESHY_BLENDER_PIPELINE.md
+          test -f docs/GENERATED_FILES.md
+
+      - name: Reject generated Python bytecode
+        run: |
+          if find . -type f -name '*.pyc' -o -type d -name '__pycache__' | grep -q .; then
+            echo "Generated Python bytecode must not be committed."
+            exit 1
+          fi
