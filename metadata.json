@@ -1,0 +1,6 @@
+{
+  "name": "AI Talking Avatar",
+  "description": "3D animated avatar companion with local Ollama AI chat, voice synthesis, speech recognition, and coding assistance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
