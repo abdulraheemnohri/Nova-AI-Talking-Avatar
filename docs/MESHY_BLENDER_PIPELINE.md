@@ -18,7 +18,11 @@ Use Meshy to generate an original adult humanoid assistant called Nova:
 
 Export the source as glTF 2.0 binary (`.glb`). Keep the original export unchanged as the source artifact.
 
-## 2. Inspect in Blender
+## 2. Blender prototype and source inspection
+
+For a reproducible pipeline smoke test before a Meshy source is available, see [Blender Prototype Generator](BLENDER_PROTOTYPE.md). It generates a simple placeholder with an armature and named actions. This is **not** the production character and does not prove smooth skinning or a production facial rig.
+
+For the actual Meshy character:
 
 1. Import the source GLB into Blender.
 2. Check scale, orientation, origin, mesh normals, material assignments and texture packing.
