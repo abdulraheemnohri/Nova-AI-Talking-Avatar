@@ -15,6 +15,20 @@ class SettingsRulesTest {
         assertTrue(EndpointRules.validate("https://model.local:11434", false) is EndpointValidation.Valid)
     }
 
+    @Test fun disablingHttpReplacesHttpEndpointsWithSecureFallbacks() {
+        val normalized = SettingsRules.normalize(
+            AvatarPreferences(
+                allowInsecureHttp = false,
+                ollamaEndpoint = "http://model.local:11434",
+                liteRtEndpoint = "http://model.local:8080"
+            )
+        )
+        assertEquals("https://localhost:11434", normalized.ollamaEndpoint)
+        assertEquals("https://localhost:8080", normalized.liteRtEndpoint)
+        assertTrue(EndpointRules.validate(normalized.ollamaEndpoint, false) is EndpointValidation.Valid)
+        assertTrue(EndpointRules.validate(normalized.liteRtEndpoint, false) is EndpointValidation.Valid)
+    }
+
     @Test fun rejectsCredentialsAndUnsupportedSchemes() {
         assertTrue(EndpointRules.validate("https://user:secret@model.local", true) is EndpointValidation.Invalid)
         assertTrue(EndpointRules.validate("file:///tmp/model", true) is EndpointValidation.Invalid)
@@ -53,5 +67,4 @@ class SettingsRulesTest {
         assertEquals(DEFAULT_ENDPOINT, SettingsRules.normalize(AvatarPreferences(ollamaEndpoint = "https://model.local/api?token=secret")).endpoint)
         assertEquals(DEFAULT_ENDPOINT, SettingsRules.normalize(AvatarPreferences(ollamaEndpoint = "https://user:secret@model.local")).endpoint)
     }
-
 }

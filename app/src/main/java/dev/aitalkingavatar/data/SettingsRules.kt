@@ -5,15 +5,17 @@ object SettingsRules {
         (if (value.isFinite()) value else fallback).coerceIn(min, max)
 
     fun normalize(input: AvatarPreferences): AvatarPreferences {
+        val fallbackOllama = if (input.allowInsecureHttp) DEFAULT_ENDPOINT else "https://localhost:11434"
+        val fallbackLiteRt = if (input.allowInsecureHttp) "http://localhost:8080" else "https://localhost:8080"
         val trimmedOllama = input.ollamaEndpoint.trim()
-        val safeOllama = when (EndpointRules.validate(trimmedOllama, allowInsecureHttp = true)) {
+        val safeOllama = when (EndpointRules.validate(trimmedOllama, allowInsecureHttp = input.allowInsecureHttp)) {
             is EndpointValidation.Valid -> trimmedOllama
-            is EndpointValidation.Invalid -> DEFAULT_ENDPOINT
+            is EndpointValidation.Invalid -> fallbackOllama
         }
         val trimmedLiteRt = input.liteRtEndpoint.trim()
-        val safeLiteRt = when (EndpointRules.validate(trimmedLiteRt, allowInsecureHttp = true)) {
+        val safeLiteRt = when (EndpointRules.validate(trimmedLiteRt, allowInsecureHttp = input.allowInsecureHttp)) {
             is EndpointValidation.Valid -> trimmedLiteRt
-            is EndpointValidation.Invalid -> "http://localhost:8080"
+            is EndpointValidation.Invalid -> fallbackLiteRt
         }
         return input.copy(
             ollamaEndpoint = safeOllama,
