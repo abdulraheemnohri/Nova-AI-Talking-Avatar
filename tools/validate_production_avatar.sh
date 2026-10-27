@@ -19,11 +19,13 @@ if [[ ! -f "$candidate" ]]; then
 fi
 
 required_morphs="jawOpen,A,E,O,U,MBP,F,L,WQ,smile,blinkLeft,blinkRight"
+required_animations="Nova_Idle,Nova_Listening,Nova_Thinking,Nova_Greeting,Nova_Speaking"
 args=(
   "$audit"
   "$candidate"
   --require-skin
   --require-animation
+  --require-animation-names "$required_animations"
   --require-morph-targets
   --require-morph-names "$required_morphs"
 )
