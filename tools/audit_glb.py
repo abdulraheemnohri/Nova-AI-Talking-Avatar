@@ -74,6 +74,8 @@ def inspect(path: Path) -> dict:
     while offset + 8 <= len(data):
         chunk_length, chunk_type = struct.unpack_from("<II", data, offset)
         offset += 8
+        if chunk_length % 4 != 0:
+            report["errors"].append(f"Chunk length {chunk_length} is not 4-byte aligned.")
         end = offset + chunk_length
         if end > len(data):
             report["errors"].append("Chunk extends beyond end of file.")
@@ -92,6 +94,9 @@ def inspect(path: Path) -> dict:
         else:
             report["warnings"].append(f"Unknown chunk type 0x{chunk_type:08x}.")
         offset = end
+
+    if offset != len(data) and offset + 8 > len(data):
+        report["errors"].append("Trailing bytes do not form a complete GLB chunk header.")
 
     if document is None:
         report["errors"].append("No readable JSON chunk found.")
