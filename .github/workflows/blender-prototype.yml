@@ -1,0 +1,44 @@
+name: Blender prototype export and GLB audit
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prototype-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y blender
+          blender --version
+
+      - name: Generate prototype GLB
+        run: blender --background --python blender/build_nova_prototype.py
+
+      - name: Audit exported GLB
+        run: |
+          test -s app/src/main/assets/models/nova_prototype.glb
+          python3 tools/audit_glb.py app/src/main/assets/models/nova_prototype.glb \
+            --require-skin --require-animation --require-morph-targets \
+            --json-out nova-prototype-audit.json
+
+      - name: Upload prototype and audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-prototype-glb-and-audit
+          path: |
+            app/src/main/assets/models/nova_prototype.glb
+            nova-prototype-audit.json
+          if-no-files-found: warn
+          retention-days: 7
