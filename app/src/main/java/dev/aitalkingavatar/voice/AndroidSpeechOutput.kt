@@ -20,6 +20,9 @@ class AndroidSpeechOutput(
     private var pending: Pair<String, AvatarPreferences>? = null
     private var engine: TextToSpeech? = null
     private var activeVisemes: List<VisemeFrame> = emptyList()
+    private var activeReadableText: String = ""
+    private var activeSpeechRate: Float = 1f
+    private var activeUtteranceId: String? = null
 
     init {
         engine = TextToSpeech(context.applicationContext) { status ->
@@ -30,20 +33,45 @@ class AndroidSpeechOutput(
                         onVisemeTimeline(activeVisemes)
                         onStarted()
                     }
+                    override fun onRangeStart(utteranceId: String?, start: Int, end: Int, frame: Int) {
+                        // Some Android TTS engines report character ranges as audio playback advances.
+                        // Use these callbacks to re-anchor a short viseme segment near the spoken range.
+                        // Providers that omit range callbacks retain the full-text heuristic fallback.
+                        if (utteranceId != activeUtteranceId) return
+                        val from = start.coerceIn(0, activeReadableText.length)
+                        val until = end.coerceIn(from, activeReadableText.length)
+                        if (until > from) {
+                            onVisemeTimeline(
+                                SpeechVisemeTimeline.estimateFromText(
+                                    activeReadableText.substring(from, until),
+                                    activeSpeechRate
+                                )
+                            )
+                        }
+                    }
                     override fun onDone(utteranceId: String?) {
+                        if (utteranceId != activeUtteranceId) return
                         onVisemeTimeline(emptyList())
                         activeVisemes = emptyList()
+                        activeReadableText = ""
+                        activeUtteranceId = null
                         onFinished(null)
                     }
                     @Deprecated("Deprecated by Android; retained for older provider callbacks")
                     override fun onError(utteranceId: String?) {
+                        if (utteranceId != activeUtteranceId) return
                         onVisemeTimeline(emptyList())
                         activeVisemes = emptyList()
+                        activeReadableText = ""
+                        activeUtteranceId = null
                         onFinished("Speech synthesis failed. Check the installed voice and language data.")
                     }
                     override fun onError(utteranceId: String?, errorCode: Int) {
+                        if (utteranceId != activeUtteranceId) return
                         onVisemeTimeline(emptyList())
                         activeVisemes = emptyList()
+                        activeReadableText = ""
+                        activeUtteranceId = null
                         onFinished("Speech synthesis failed (code $errorCode). Check the installed voice and language data.")
                     }
                 })
@@ -71,14 +99,21 @@ class AndroidSpeechOutput(
         tts.setSpeechRate(settings.speechRate.coerceIn(0.5f, 2f))
         tts.setPitch(settings.pitch.coerceIn(0.5f, 2f))
         val readable = text.replace(Regex("```[\\s\\S]*?```"), " Code is shown on screen. ").take(3500)
-        // Heuristic text cues are a visual fallback only; Android TTS does not expose phoneme alignment.
-        activeVisemes = SpeechVisemeTimeline.estimateFromText(readable, settings.speechRate)
-        tts.speak(readable, TextToSpeech.QUEUE_FLUSH, Bundle(), UUID.randomUUID().toString())
+        // Range callbacks can align short heuristic segments to TTS playback when the engine supports them.
+        // They still do not provide phoneme-level timing; keep a whole-text fallback for other engines.
+        activeReadableText = readable
+        activeSpeechRate = settings.speechRate.coerceIn(0.5f, 2f)
+        activeVisemes = SpeechVisemeTimeline.estimateFromText(readable, activeSpeechRate)
+        val utteranceId = UUID.randomUUID().toString()
+        activeUtteranceId = utteranceId
+        tts.speak(readable, TextToSpeech.QUEUE_FLUSH, Bundle(), utteranceId)
     }
 
     fun stop() {
         pending = null
         activeVisemes = emptyList()
+        activeReadableText = ""
+        activeUtteranceId = null
         onVisemeTimeline(emptyList())
         runCatching { engine?.stop() }
         onFinished(null)
@@ -87,6 +122,8 @@ class AndroidSpeechOutput(
     fun shutdown() {
         pending = null
         activeVisemes = emptyList()
+        activeReadableText = ""
+        activeUtteranceId = null
         onVisemeTimeline(emptyList())
         runCatching { engine?.stop() }
         runCatching { engine?.shutdown() }
