@@ -16,9 +16,8 @@ class InactiveAdapterFallback(private val providerName: String) : AiAdapter {
         return message
     }
 
-    override suspend fun testConnection(): ConnectionResult {
-        return ConnectionResult(false, "$providerName adapter is marked inactive in Settings.")
-    }
+    override suspend fun testConnection(): ConnectionResult =
+        ConnectionResult(false, "$providerName adapter is marked inactive in Settings.")
 }
 
 object AiProviderFactory {
@@ -31,7 +30,8 @@ object AiProviderFactory {
             AiProviderType.OLLAMA -> OllamaAdapter(preferences)
             AiProviderType.LITERT_CLI -> LiteRtCliAdapter(
                 endpointUrl = preferences.liteRtEndpoint,
-                modelName = preferences.liteRtModel
+                modelName = preferences.liteRtModel,
+                allowInsecureHttp = preferences.allowInsecureHttp
             )
             AiProviderType.GEMINI_API -> GeminiAdapter(
                 apiKeyOverride = preferences.geminiApiKey,
