@@ -36,6 +36,19 @@ class SettingsRulesTest {
         assertEquals(2f, normalized.cameraZoom, 0.001f)
     }
 
+    @Test fun replacesNonFiniteVoiceAndCameraValuesWithSafeDefaults() {
+        val normalized = SettingsRules.normalize(
+            AvatarPreferences(
+                speechRate = Float.NaN,
+                pitch = Float.POSITIVE_INFINITY,
+                cameraZoom = Float.NEGATIVE_INFINITY
+            )
+        )
+        assertEquals(1f, normalized.speechRate, 0.001f)
+        assertEquals(1f, normalized.pitch, 0.001f)
+        assertEquals(1f, normalized.cameraZoom, 0.001f)
+    }
+
     @Test fun neverPersistsQueryCredentialsOrUserInfo() {
         assertEquals(DEFAULT_ENDPOINT, SettingsRules.normalize(AvatarPreferences(ollamaEndpoint = "https://model.local/api?token=secret")).endpoint)
         assertEquals(DEFAULT_ENDPOINT, SettingsRules.normalize(AvatarPreferences(ollamaEndpoint = "https://user:secret@model.local")).endpoint)
