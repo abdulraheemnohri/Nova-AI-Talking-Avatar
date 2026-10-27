@@ -185,7 +185,7 @@ class AuditGlbTests(unittest.TestCase):
 
     def test_rejects_trailing_incomplete_chunk_header(self):
         valid = make_glb({"meshes": [{}]})
-        data = valid + b"\\x01\\x02"
+        data = valid + b"xy"
         # Keep declared length consistent so this specifically exercises chunk framing.
         data = struct.pack("<III", audit_glb.GLB_MAGIC, 2, len(data)) + data[12:]
         report = audit_glb.inspect(self.write_temp(data))
