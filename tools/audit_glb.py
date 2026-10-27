@@ -72,27 +72,41 @@ def inspect(path: Path) -> dict:
 
     offset = 12
     document = None
+    chunk_index = 0
     while offset + 8 <= len(data):
         chunk_length, chunk_type = struct.unpack_from("<II", data, offset)
         offset += 8
         end = offset + chunk_length
+        if chunk_length % 4:
+            report["errors"].append(
+                f"Chunk {chunk_index} length ({chunk_length}) is not 4-byte aligned."
+            )
+        if chunk_index == 0 and chunk_type != JSON_CHUNK:
+            report["errors"].append("The first GLB chunk must be the JSON chunk.")
         if end > len(data):
             report["errors"].append("Chunk extends beyond end of file.")
             break
         chunk = data[offset:end]
         if chunk_type == JSON_CHUNK:
             if document is not None:
-                report["warnings"].append("Multiple JSON chunks found.")
-            try:
-                document = json.loads(chunk.decode("utf-8").rstrip(" \t\r\n\0"))
-                report["json_chunk_present"] = True
-            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-                report["errors"].append(f"Could not parse JSON chunk: {exc}")
+                report["errors"].append("Multiple JSON chunks found; GLB must contain one JSON chunk.")
+            else:
+                try:
+                    document = json.loads(chunk.decode("utf-8").rstrip(" \t\r\n\0"))
+                    report["json_chunk_present"] = True
+                except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                    report["errors"].append(f"Could not parse JSON chunk: {exc}")
         elif chunk_type == BIN_CHUNK:
             report["binary_chunk_present"] = True
         else:
             report["warnings"].append(f"Unknown chunk type 0x{chunk_type:08x}.")
         offset = end
+        chunk_index += 1
+
+    if offset != len(data):
+        report["errors"].append(
+            f"Trailing incomplete GLB chunk header or bytes at offset {offset}."
+        )
 
     if document is None:
         report["errors"].append("No readable JSON chunk found.")
