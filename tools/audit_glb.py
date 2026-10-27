@@ -116,33 +116,74 @@ def inspect(path: Path) -> dict:
         report["errors"].append("GLB JSON chunk root must be an object.")
         return report
 
-    meshes = document.get("meshes", [])
-    nodes = document.get("nodes", [])
-    skins = document.get("skins", [])
-    animations = document.get("animations", [])
+    def collection(name: str) -> list:
+        value = document.get(name, [])
+        if not isinstance(value, list):
+            report["errors"].append(f"GLB JSON field '{name}' must be an array.")
+            return []
+        return value
+
+    meshes = collection("meshes")
+    nodes = collection("nodes")
+    skins = collection("skins")
+    animations = collection("animations")
+    materials = collection("materials")
+    images = collection("images")
+    for name, entries in (("meshes", meshes), ("nodes", nodes), ("skins", skins),
+                          ("animations", animations), ("materials", materials),
+                          ("images", images)):
+        for index, entry in enumerate(entries):
+            if not isinstance(entry, dict):
+                report["errors"].append(
+                    f"GLB JSON field '{name}[{index}]' must be an object."
+                )
+
     report["mesh_count"] = len(meshes)
     report["node_count"] = len(nodes)
     report["skin_count"] = len(skins)
     report["animation_count"] = len(animations)
     report["animation_names"] = [
-        item.get("name") or f"animation_{i}" for i, item in enumerate(animations)
+        item.get("name") or f"animation_{i}"
+        for i, item in enumerate(animations) if isinstance(item, dict)
     ]
-    report["material_count"] = len(document.get("materials", []))
+    report["material_count"] = len(materials)
     report["embedded_image_count"] = sum(
-        1 for image in document.get("images", []) if "bufferView" in image
+        1 for image in images if isinstance(image, dict) and "bufferView" in image
     )
 
     # Human-readable morph names are conventionally stored in mesh.extras.targetNames.
     # Primitive target keys (POSITION/NORMAL/TANGENT) are accessor semantics, not names.
-    for mesh in meshes:
+    for mesh_index, mesh in enumerate(meshes):
+        if not isinstance(mesh, dict):
+            continue
         extras = mesh.get("extras", {})
         target_names = extras.get("targetNames", []) if isinstance(extras, dict) else []
+        if not isinstance(target_names, list):
+            report["errors"].append(
+                f"GLB JSON field 'meshes[{mesh_index}].extras.targetNames' must be an array."
+            )
+            target_names = []
         for name in target_names:
             if isinstance(name, str) and name not in report["named_morph_targets"]:
                 report["named_morph_targets"].append(name)
         primitives = mesh.get("primitives", [])
+        if not isinstance(primitives, list):
+            report["errors"].append(
+                f"GLB JSON field 'meshes[{mesh_index}].primitives' must be an array."
+            )
+            continue
         for primitive_index, primitive in enumerate(primitives):
+            if not isinstance(primitive, dict):
+                report["errors"].append(
+                    f"GLB JSON field 'meshes[{mesh_index}].primitives[{primitive_index}]' must be an object."
+                )
+                continue
             targets = primitive.get("targets", [])
+            if not isinstance(targets, list):
+                report["errors"].append(
+                    f"GLB JSON field 'meshes[{mesh_index}].primitives[{primitive_index}].targets' must be an array."
+                )
+                continue
             if target_names and len(target_names) != len(targets):
                 mismatch = {
                     "mesh": mesh.get("name") or "unnamed_mesh",
@@ -153,7 +194,12 @@ def inspect(path: Path) -> dict:
                 report["morph_name_count_mismatches"].append(mismatch)
             if targets:
                 report["morph_target_mesh_primitives"] += 1
-                for target in targets:
+                for target_index, target in enumerate(targets):
+                    if not isinstance(target, dict):
+                        report["errors"].append(
+                            f"GLB JSON field 'meshes[{mesh_index}].primitives[{primitive_index}].targets[{target_index}]' must be an object."
+                        )
+                        continue
                     for attribute in target:
                         if attribute not in report["morph_target_names"]:
                             report["morph_target_names"].append(attribute)
