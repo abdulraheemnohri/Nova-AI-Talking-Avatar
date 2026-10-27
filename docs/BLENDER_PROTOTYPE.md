@@ -1,6 +1,6 @@
 # Nova Blender Prototype Generator
 
-This generator is a **procedural pipeline smoke-test asset**, not the final Meshy character. It creates a stylized low-detail humanoid made from separate rigid-weighted mesh parts, a basic armature, simple named animation actions, and approximate mouth shape keys, then attempts to export a GLB.
+This generator is a **procedural pipeline smoke-test asset**, not the final Meshy character. It creates a stylized low-detail humanoid made from separate rigid-weighted mesh parts, a basic armature, simple named animation actions, and basic head/mouth/eyelid shape keys, then attempts to export a GLB.
 
 ## Requirements
 
@@ -41,7 +41,8 @@ The generator defines these as Blender actions with keyframes. Exporter behavior
 
 - This is a geometric placeholder character, not a photorealistic or Meshy-generated model.
 - Body parts use rigid one-bone weights; this does not demonstrate production-quality smooth skin deformation.
-- The mouth shape keys deform a simple mouth object, not a complete face. They are not a realistic facial rig or phoneme-accurate lip-sync system.
+- Head shape keys deform a simplified spherical head and the mouth keys deform a separate simple mouth object; this is not a realistic facial rig or phoneme-accurate lip-sync system.
+- Eye blink keys flatten the prototype eye meshes; they are placeholders rather than anatomically accurate eyelids.
 - Hands, clothing, eyes, hair, topology, materials, and anatomy are deliberately simplified.
 - The script has only been syntax-checked with Python in the authoring environment. Blender execution, GLB export, Khronos validation, Android Filament rendering, and Pixel 6 playback remain unverified until run in those environments.
 
