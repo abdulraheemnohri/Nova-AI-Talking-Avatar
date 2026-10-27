@@ -55,4 +55,11 @@ class SpeechVisemeTimelineTest {
         assertTrue(frames.any { it.weights.containsKey("O") })
         assertTrue(frames.any { it.weights.containsKey("A") })
     }
+    @Test fun longTextEstimateCoversFullTtsInputLimit() {
+        val text = "a".repeat(1200)
+        val frames = SpeechVisemeTimeline.estimateFromText(text, 1f)
+        assertTrue(frames.size > 2000)
+        assertTrue(frames.last().timeMs >= 1200L * 24L)
+        assertEquals(0f, frames.last().weights["jawOpen"]!!, 0f)
+    }
 }
