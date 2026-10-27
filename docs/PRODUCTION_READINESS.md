@@ -40,3 +40,27 @@ See [Validation Report](../VALIDATION_REPORT.md) and [Blender CI](BLENDER_CI.md)
 
 The repository workflows now do more than source checks: they build/test the Android debug app and generate/audit the stylized Blender prototype. These are runner-level checks, not physical-device tests. A passing structural audit does not prove that a model looks realistic, that its rig deforms well, or that mouth motion matches audio.
 
+
+
+## Strict candidate asset gate
+
+Run the repository's stricter acceptance script against a candidate GLB:
+
+```bash
+bash tools/validate_production_avatar.sh /path/to/assistant.glb audit-report.json
+```
+
+The gate requires a skin, at least one animation, morph targets, and the canonical named morph set. The JSON report records structural findings. A pass is not proof of visual quality, correct deformation, redistribution rights, complete glTF conformance, or device performance.
+
+## Production acceptance checklist
+
+- [ ] Original or properly licensed character; provenance, licence/terms, attribution and any generation/export costs documented.
+- [ ] Final GLB placed at `app/src/main/assets/models/assistant.glb`, with editable source project retained where licensing permits.
+- [ ] Strict repository gate passes and its JSON report is saved.
+- [ ] Khronos glTF Validator report reviewed; errors resolved and warnings assessed.
+- [ ] Blender inspection confirms each required morph affects the intended facial region without visible tearing or intersections.
+- [ ] Idle, talking, blink and interruption transitions inspected visually.
+- [ ] Physical Pixel 6 test records Android build, asset size, frame pacing, peak memory, thermal behaviour and crashes during repeated/long speech.
+- [ ] Release signing and reproducible release steps verified without committing keystore or credential files.
+
+**Do not mark production complete from CI prototype success alone.** Accurate phoneme-aligned lip-sync and physical Pixel 6 performance remain separate acceptance items.
