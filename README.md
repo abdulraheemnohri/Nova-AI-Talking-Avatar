@@ -19,7 +19,7 @@ python3 tools/audit_glb.py /path/to/nova.glb --json-out nova-audit.json
 
 For production acceptance, also use Blender, the Khronos glTF Validator, and actual Android/Pixel playback tests. Structural inspection alone does not verify animation quality, skin deformation or phoneme-accurate lip-sync.
 
-See [Timed Viseme Timeline](docs/SPEECH_VISEME_TIMELINE.md) for the integration API and its alignment limitations.
+See [Timed Viseme Timeline](docs/SPEECH_VISEME_TIMELINE.md) for the integration API and its alignment limitations. The [Blender prototype CI guide](docs/BLENDER_CI.md) explains how to generate a downloadable pipeline-test GLB artifact.
 
 ## Build and test
 - Build debug APK: `gradle assembleDebug`
