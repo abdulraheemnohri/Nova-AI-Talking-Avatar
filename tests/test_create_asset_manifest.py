@@ -76,6 +76,16 @@ class ManifestGeneratorTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("no '..' segments", result.stderr)
 
+    def test_never_overwrites_source_asset_even_with_force(self) -> None:
+        original = self.asset.read_bytes()
+        result = self.run_generator(
+            "--output", "assets/assistant.glb",
+            "--redistribution-allowed", "--force",
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("must not overwrite the source asset", result.stderr)
+        self.assertEqual(self.asset.read_bytes(), original)
+
 
 if __name__ == "__main__":
     unittest.main()
