@@ -34,6 +34,7 @@ def inspect(path: Path) -> dict:
         "skin_count": 0,
         "animation_count": 0,
         "animation_names": [],
+        "missing_required_animation_names": [],
         "morph_target_mesh_primitives": 0,
         "morph_target_names": [],
         "named_morph_targets": [],
@@ -172,6 +173,12 @@ def main() -> int:
     parser.add_argument("glb", type=Path, help="Path to the input .glb file")
     parser.add_argument("--require-skin", action="store_true", help="Fail if no skin is present")
     parser.add_argument("--require-animation", action="store_true", help="Fail if no animation clips are present")
+    parser.add_argument(
+        "--require-animation-names",
+        type=str,
+        default="",
+        help="Comma-separated list of named animation clips required in the GLB",
+    )
     parser.add_argument("--require-morph-targets", action="store_true", help="Fail if no morph-target primitives are present")
     parser.add_argument(
         "--require-morph-names",
@@ -189,6 +196,17 @@ def main() -> int:
         report["errors"].append("Required animation clips are missing.")
     if args.require_morph_targets and report["morph_target_mesh_primitives"] == 0:
         report["errors"].append("Required morph targets are missing.")
+    required_animation_names = [
+        name.strip() for name in args.require_animation_names.split(",") if name.strip()
+    ]
+    report["missing_required_animation_names"] = [
+        name for name in required_animation_names if name not in report["animation_names"]
+    ]
+    if report["missing_required_animation_names"]:
+        report["errors"].append(
+            "Required named animation clips are missing: "
+            + ", ".join(report["missing_required_animation_names"])
+        )
     required_names = [name.strip() for name in args.require_morph_names.split(",") if name.strip()]
     report["missing_required_morph_targets"] = [
         name for name in required_names if name not in report["named_morph_targets"]
