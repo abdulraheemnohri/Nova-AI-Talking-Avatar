@@ -36,6 +36,8 @@ def inspect(path: Path) -> dict:
         "animation_names": [],
         "morph_target_mesh_primitives": 0,
         "morph_target_names": [],
+        "named_morph_targets": [],
+        "missing_required_morph_targets": [],
         "material_count": 0,
         "embedded_image_count": 0,
         "warnings": [],
@@ -110,7 +112,14 @@ def inspect(path: Path) -> dict:
         1 for image in document.get("images", []) if "bufferView" in image
     )
 
+    # Human-readable morph names are conventionally stored in mesh.extras.targetNames.
+    # Primitive target keys (POSITION/NORMAL/TANGENT) are accessor semantics, not names.
     for mesh in meshes:
+        extras = mesh.get("extras", {})
+        target_names = extras.get("targetNames", []) if isinstance(extras, dict) else []
+        for name in target_names:
+            if isinstance(name, str) and name not in report["named_morph_targets"]:
+                report["named_morph_targets"].append(name)
         for primitive in mesh.get("primitives", []):
             targets = primitive.get("targets", [])
             if targets:
@@ -145,6 +154,12 @@ def main() -> int:
     parser.add_argument("--require-skin", action="store_true", help="Fail if no skin is present")
     parser.add_argument("--require-animation", action="store_true", help="Fail if no animation clips are present")
     parser.add_argument("--require-morph-targets", action="store_true", help="Fail if no morph-target primitives are present")
+    parser.add_argument(
+        "--require-morph-names",
+        type=str,
+        default="",
+        help="Comma-separated list of named morph targets required in mesh.extras.targetNames",
+    )
     parser.add_argument("--json-out", type=Path, help="Optional path to write the full JSON report")
     args = parser.parse_args()
 
@@ -155,6 +170,15 @@ def main() -> int:
         report["errors"].append("Required animation clips are missing.")
     if args.require_morph_targets and report["morph_target_mesh_primitives"] == 0:
         report["errors"].append("Required morph targets are missing.")
+    required_names = [name.strip() for name in args.require_morph_names.split(",") if name.strip()]
+    report["missing_required_morph_targets"] = [
+        name for name in required_names if name not in report["named_morph_targets"]
+    ]
+    if report["missing_required_morph_targets"]:
+        report["errors"].append(
+            "Required named morph targets are missing: "
+            + ", ".join(report["missing_required_morph_targets"])
+        )
 
     output = json.dumps(report, indent=2, ensure_ascii=False)
     print(output)
