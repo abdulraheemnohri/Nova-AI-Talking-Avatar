@@ -38,6 +38,48 @@ class SpeechVisemeTimeline(frames: List<VisemeFrame>) {
     }
 
     companion object {
+        /** Heuristic text-to-viseme estimate for motion fallback, not phoneme alignment. */
+        fun estimateFromText(text: String, speechRate: Float = 1f): List<VisemeFrame> {
+            val rate = speechRate.coerceIn(0.5f, 2f)
+            val result = mutableListOf(VisemeFrame(0L, mapOf("jawOpen" to 0f)))
+            var cursor = 0L
+            text.take(800).forEach { raw ->
+                val ch = raw.lowercaseChar()
+                if (ch.isWhitespace()) {
+                    cursor += (38f / rate).toLong().coerceAtLeast(15L)
+                } else {
+                    val duration = (72f / rate).toLong().coerceIn(24L, 144L)
+                    val viseme = when (ch) {
+                        'a' -> "A"
+                        'e', 'i', 'y' -> "E"
+                        'o' -> "O"
+                        'u' -> "U"
+                        'm', 'b', 'p' -> "MBP"
+                        'f', 'v' -> "F"
+                        'l' -> "L"
+                        'w', 'q' -> "WQ"
+                        else -> "jawOpen"
+                    }
+                    val opening = when (viseme) {
+                        "A" -> 0.82f
+                        "O", "U" -> 0.62f
+                        "E" -> 0.48f
+                        "MBP" -> 0.08f
+                        else -> 0.28f
+                    }
+                    result += VisemeFrame(cursor, mapOf("jawOpen" to opening, viseme to if (viseme == "jawOpen") opening else 0.7f))
+                    cursor += duration
+                    result += VisemeFrame(cursor, mapOf("jawOpen" to 0f))
+                }
+            }
+            if (result.last().timeMs == cursor) {
+                result += VisemeFrame(cursor + 1L, mapOf("jawOpen" to 0f))
+            } else {
+                result += VisemeFrame(cursor, mapOf("jawOpen" to 0f))
+            }
+            return result
+        }
+
         fun canonicalName(rawName: String): String? {
             val name = rawName.lowercase().replace(Regex("[^a-z0-9]"), "")
             return when {
