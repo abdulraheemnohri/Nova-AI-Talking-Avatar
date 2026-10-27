@@ -50,7 +50,10 @@ jobs:
 
       - name: Reject generated Python bytecode
         run: |
-          if find . -type f -name '*.pyc' -o -type d -name '__pycache__' | grep -q .; then
-            echo "Generated Python bytecode must not be committed."
+          if git ls-files | grep -E '(^|/)__pycache__/|\.pyc
+ >/dev/null; then
+            echo "Generated Python bytecode is tracked by Git; remove it from the repository."
+            git ls-files | grep -E '(^|/)__pycache__/|\.pyc
+
             exit 1
           fi
