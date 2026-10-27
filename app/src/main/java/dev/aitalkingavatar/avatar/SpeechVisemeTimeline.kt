@@ -43,7 +43,7 @@ class SpeechVisemeTimeline(frames: List<VisemeFrame>) {
             val rate = speechRate.coerceIn(0.5f, 2f)
             val result = mutableListOf(VisemeFrame(0L, mapOf("jawOpen" to 0f)))
             var cursor = 0L
-            text.take(800).forEach { raw ->
+            text.take(3500).forEach { raw ->
                 val ch = raw.lowercaseChar()
                 if (ch.isWhitespace()) {
                     cursor += (38f / rate).toLong().coerceAtLeast(15L)
