@@ -62,4 +62,18 @@ class SpeechVisemeTimelineTest {
         assertTrue(frames.last().timeMs >= 1200L * 24L)
         assertEquals(0f, frames.last().weights["jawOpen"]!!, 0f)
     }
+
+    @Test fun punctuationAddsNeutralPauseInsteadOfInventingMouthShapes() {
+        val plain = SpeechVisemeTimeline.estimateFromText("a", 1f)
+        val punctuated = SpeechVisemeTimeline.estimateFromText("a.", 1f)
+        assertTrue(punctuated.last().timeMs > plain.last().timeMs + 150L)
+        assertEquals(0f, punctuated.last().weights["jawOpen"]!!, 0f)
+        assertTrue(punctuated.all { frame -> frame.weights.keys.all { it == "jawOpen" || it == "A" } })
+    }
+
+    @Test fun commasAndSentenceEndsHaveDifferentPauseLengths() {
+        val comma = SpeechVisemeTimeline.estimateFromText("a,", 1f).last().timeMs
+        val sentenceEnd = SpeechVisemeTimeline.estimateFromText("a.", 1f).last().timeMs
+        assertTrue(sentenceEnd > comma + 80L)
+    }
 }
