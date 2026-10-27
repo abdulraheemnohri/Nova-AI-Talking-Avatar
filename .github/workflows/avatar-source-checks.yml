@@ -47,13 +47,16 @@ jobs:
           test -f docs/MESHY_PROMPT.md
           test -f docs/MESHY_BLENDER_PIPELINE.md
           test -f docs/GENERATED_FILES.md
+          test -f docs/BLENDER_CI.md
+          test -f .github/workflows/blender-prototype.yml
 
-      - name: Reject generated Python bytecode
+      - name: Reject tracked generated Python bytecode
+        shell: bash
         run: |
-          if git ls-files | grep -E '(^|/)__pycache__/|\.pyc
- >/dev/null; then
-            echo "Generated Python bytecode is tracked by Git; remove it from the repository."
-            git ls-files | grep -E '(^|/)__pycache__/|\.pyc
-
+          set -euo pipefail
+          tracked="$(git ls-files | grep -E '(^|/)__pycache__/|\.pyc$' || true)"
+          if [[ -n "$tracked" ]]; then
+            echo "Generated Python bytecode is tracked by Git:"
+            printf '%s\n' "$tracked"
             exit 1
           fi

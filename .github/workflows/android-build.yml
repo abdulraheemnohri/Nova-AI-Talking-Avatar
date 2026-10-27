@@ -32,7 +32,7 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           cmdline-tools-version: "12266719"
-          packages: "platform-tools,platforms;android-36,build-tools;36.0.0"
+          packages: "platform-tools"
 
       - name: Install Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -43,13 +43,14 @@ jobs:
         run: |
           set +e
           yes | sdkmanager --licenses >/dev/null
-          status=$?
+          status=${PIPESTATUS[1]}
           set -e
-          # `yes` can receive SIGPIPE (141) after sdkmanager has accepted all licenses.
-          # Preserve genuine sdkmanager failures while tolerating only that expected pipe close.
-          if [ "$status" -ne 0 ] && [ "$status" -ne 141 ]; then
+          if [ "$status" -ne 0 ]; then
             exit "$status"
           fi
+
+      - name: Install required Android SDK packages
+        run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug

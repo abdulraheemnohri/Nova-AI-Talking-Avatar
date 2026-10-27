@@ -4,7 +4,7 @@ Run with Blender 3.6 LTS or Blender 4.x:
 
 This is a procedural prototype for pipeline validation, not a final photoreal Meshy character.
 It creates separate rigid-weighted mesh parts, a humanoid armature and simple animation actions.
-Facial blendshapes, realistic hands, cloth simulation and production skinning are not included.
+The prototype includes simple jaw/viseme/blink shape keys, but not a production-quality facial rig, realistic hands, cloth simulation or smooth production skinning.
 """
 import bpy, math, os
 from mathutils import Vector
@@ -89,10 +89,32 @@ sphere('Torso',(0,0,1.35),(0.36,0.22,0.55),ivory,'spine')
 sphere('ChestCore',(0,-0.205,1.48),(0.19,0.035,0.24),charcoal,'spine')
 sphere('CoreLight',(0,-0.24,1.52),(0.07,0.025,0.12),cyan,'spine')
 cylinder_between('Neck',(0,0,1.72),(0,0,2.1),0.105,charcoal,'neck')
-sphere('Head',(0,0,2.34),(0.27,0.23,0.38),skin,'head')
+head_obj=sphere('Head',(0,0,2.34),(0.27,0.23,0.38),skin,'head')
+head_obj.shape_key_add(name='Basis', from_mix=False)
+def head_key(name, jaw_drop=0.0, jaw_width=1.0, lower_face_back=0.0):
+    key=head_obj.shape_key_add(name=name, from_mix=False)
+    for i, vertex in enumerate(head_obj.data.vertices):
+        co=vertex.co.copy()
+        lower=max(0.0,min(1.0,(-co.z-0.02)/0.20))
+        key.data[i].co.x=co.x*(1.0+(jaw_width-1.0)*lower)
+        key.data[i].co.y=co.y+lower_face_back*lower
+        key.data[i].co.z=co.z-jaw_drop*lower
+    return key
+head_key('jawOpen',jaw_drop=0.12,lower_face_back=0.025)
+head_key('viseme_A',jaw_drop=0.15,jaw_width=1.04,lower_face_back=0.02)
+head_key('viseme_O',jaw_drop=0.07,jaw_width=0.86)
+head_key('viseme_E',jaw_drop=0.06,jaw_width=1.08)
+head_key('viseme_M',jaw_width=0.92)
+
 sphere('HairCap',(0,0.015,2.58),(0.28,0.235,0.19),charcoal,'head')
-sphere('Eye.L',(0.105,-0.211,2.39),(0.045,0.025,0.025),cyan,'head')
-sphere('Eye.R',(-0.105,-0.211,2.39),(0.045,0.025,0.025),cyan,'head')
+eye_l=sphere('Eye.L',(0.105,-0.211,2.39),(0.045,0.025,0.025),cyan,'head')
+eye_r=sphere('Eye.R',(-0.105,-0.211,2.39),(0.045,0.025,0.025),cyan,'head')
+for eye, key_name in ((eye_l,'blinkLeft'),(eye_r,'blinkRight')):
+    eye.shape_key_add(name='Basis', from_mix=False)
+    blink=eye.shape_key_add(name=key_name, from_mix=False)
+    for i, vertex in enumerate(eye.data.vertices):
+        co=vertex.co.copy()
+        blink.data[i].co=(co.x,co.y,co.z*0.08)
 mouth_obj=sphere('Mouth',(0,-0.222,2.26),(0.055,0.014,0.012),charcoal,'head')
 mouth_obj.shape_key_add(name='Basis', from_mix=False)
 def mouth_key(name, sx, sy, sz, offset_z=0.0):

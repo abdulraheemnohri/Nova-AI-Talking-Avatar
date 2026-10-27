@@ -379,6 +379,11 @@ private fun AvatarScreen(
     }
 
     LaunchedEffect(state.avatarState) { rendererRef.value?.setState(state.avatarState) }
+    LaunchedEffect(state.visemeTimelineVersion) {
+        val renderer = rendererRef.value
+        if (state.visemeFrames.isEmpty()) renderer?.clearVisemeTimeline()
+        else renderer?.playVisemeTimeline(state.visemeFrames)
+    }
     LaunchedEffect(state.settings.graphicsQuality) { rendererRef.value?.setQuality(state.settings.graphicsQuality) }
     LaunchedEffect(state.settings.reducedMotion) { rendererRef.value?.setReducedMotion(state.settings.reducedMotion) }
     LaunchedEffect(state.settings.cameraZoom) { rendererRef.value?.setCameraZoom(state.settings.cameraZoom) }
