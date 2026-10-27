@@ -19,7 +19,7 @@ jobs:
       - name: Install Blender
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y blender
+          sudo apt-get install --no-install-recommends -y blender python3-numpy
           blender --version
 
       - name: Generate prototype GLB
