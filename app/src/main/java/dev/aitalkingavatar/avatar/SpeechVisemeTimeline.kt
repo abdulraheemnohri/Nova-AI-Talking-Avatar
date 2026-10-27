@@ -45,31 +45,50 @@ class SpeechVisemeTimeline(frames: List<VisemeFrame>) {
             var cursor = 0L
             text.take(3500).forEach { raw ->
                 val ch = raw.lowercaseChar()
-                if (ch.isWhitespace()) {
-                    cursor += (38f / rate).toLong().coerceAtLeast(15L)
-                } else {
-                    val duration = (72f / rate).toLong().coerceIn(24L, 144L)
-                    val viseme = when (ch) {
-                        'a' -> "A"
-                        'e', 'i', 'y' -> "E"
-                        'o' -> "O"
-                        'u' -> "U"
-                        'm', 'b', 'p' -> "MBP"
-                        'f', 'v' -> "F"
-                        'l' -> "L"
-                        'w', 'q' -> "WQ"
-                        else -> "jawOpen"
+                when {
+                    ch.isWhitespace() -> {
+                        cursor += (38f / rate).toLong().coerceAtLeast(15L)
                     }
-                    val opening = when (viseme) {
-                        "A" -> 0.82f
-                        "O", "U" -> 0.62f
-                        "E" -> 0.48f
-                        "MBP" -> 0.08f
-                        else -> 0.28f
+                    ch in setOf(',', ';', ':') -> {
+                        // Punctuation should create a short neutral pause, not a fake mouth shape.
+                        result += VisemeFrame(cursor, mapOf("jawOpen" to 0f))
+                        cursor += (105f / rate).toLong().coerceAtLeast(45L)
+                        result += VisemeFrame(cursor, mapOf("jawOpen" to 0f))
                     }
-                    result += VisemeFrame(cursor, mapOf("jawOpen" to opening, viseme to if (viseme == "jawOpen") opening else 0.7f))
-                    cursor += duration
-                    result += VisemeFrame(cursor, mapOf("jawOpen" to 0f))
+                    ch in setOf('.', '!', '?', '…') -> {
+                        result += VisemeFrame(cursor, mapOf("jawOpen" to 0f))
+                        cursor += (220f / rate).toLong().coerceAtLeast(90L)
+                        result += VisemeFrame(cursor, mapOf("jawOpen" to 0f))
+                    }
+                    ch in setOf('-', '—', '–', '\'', '’') -> {
+                        result += VisemeFrame(cursor, mapOf("jawOpen" to 0f))
+                        cursor += (55f / rate).toLong().coerceAtLeast(24L)
+                        result += VisemeFrame(cursor, mapOf("jawOpen" to 0f))
+                    }
+                    else -> {
+                        val duration = (72f / rate).toLong().coerceIn(24L, 144L)
+                        val viseme = when (ch) {
+                            'a' -> "A"
+                            'e', 'i', 'y' -> "E"
+                            'o' -> "O"
+                            'u' -> "U"
+                            'm', 'b', 'p' -> "MBP"
+                            'f', 'v' -> "F"
+                            'l' -> "L"
+                            'w', 'q' -> "WQ"
+                            else -> "jawOpen"
+                        }
+                        val opening = when (viseme) {
+                            "A" -> 0.82f
+                            "O", "U" -> 0.62f
+                            "E" -> 0.48f
+                            "MBP" -> 0.08f
+                            else -> 0.28f
+                        }
+                        result += VisemeFrame(cursor, mapOf("jawOpen" to opening, viseme to if (viseme == "jawOpen") opening else 0.7f))
+                        cursor += duration
+                        result += VisemeFrame(cursor, mapOf("jawOpen" to 0f))
+                    }
                 }
             }
             if (result.last().timeMs == cursor) {
