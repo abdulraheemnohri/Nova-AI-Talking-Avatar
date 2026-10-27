@@ -58,6 +58,17 @@ class AuditGlbTests(unittest.TestCase):
         self.assertEqual(report["morph_target_mesh_primitives"], 1)
         self.assertCountEqual(report["morph_target_names"], ["POSITION", "NORMAL"])
 
+    def test_named_morph_targets_are_reported(self):
+        doc = {
+            "meshes": [{
+                "extras": {"targetNames": ["jawOpen", "A", "blinkLeft"]},
+                "primitives": [{"targets": [{"POSITION": 3}, {"POSITION": 4}, {"POSITION": 5}]}],
+            }]
+        }
+        report = audit_glb.inspect(self.write_temp(make_glb(doc)))
+        self.assertCountEqual(report["named_morph_targets"], ["jawOpen", "A", "blinkLeft"])
+        self.assertEqual(report["missing_required_morph_targets"], [])
+
     def test_short_file_is_rejected(self):
         report = audit_glb.inspect(self.write_temp(b"glTF"))
         self.assertFalse(report["structurally_usable_candidate"])
