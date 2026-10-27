@@ -12,7 +12,7 @@ class SpeechVisemeTimeline(frames: List<VisemeFrame>) {
             VisemeFrame(
                 frame.timeMs.coerceAtLeast(0L),
                 frame.weights.entries.mapNotNull { (name, weight) ->
-                    canonicalName(name)?.let { it to weight.coerceIn(0f, 1f) }
+                    canonicalName(name)?.let { it to if (weight.isFinite()) weight.coerceIn(0f, 1f) else 0f }
                 }.toMap()
             )
         }
@@ -40,7 +40,7 @@ class SpeechVisemeTimeline(frames: List<VisemeFrame>) {
     companion object {
         /** Heuristic text-to-viseme estimate for motion fallback, not phoneme alignment. */
         fun estimateFromText(text: String, speechRate: Float = 1f): List<VisemeFrame> {
-            val rate = speechRate.coerceIn(0.5f, 2f)
+            val rate = (if (speechRate.isFinite()) speechRate else 1f).coerceIn(0.5f, 2f)
             val result = mutableListOf(VisemeFrame(0L, mapOf("jawOpen" to 0f)))
             var cursor = 0L
             text.take(3500).forEach { raw ->
