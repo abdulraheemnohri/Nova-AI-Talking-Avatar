@@ -51,6 +51,8 @@ Use the following names exactly when possible. The renderer normalizes known ali
 
 For each morph, inspect weights 0.0, 0.5, and 1.0. Check front and three-quarter views. Lips should not detach, teeth should not protrude through the face, eyes should remain seated, and the nose/cheeks should not collapse. Check combined shapes such as `jawOpen + A`, `jawOpen + O`, and `smile + blinkLeft`. Keep the neutral face at zero for all expression morphs.
 
+The audit reads human-readable morph names from glTF `mesh.extras.targetNames`; a mesh can contain morph-target accessors without exposing the required facial names. Use `--require-morph-names` to fail the production gate when any canonical name is missing. The audit remains structural and does not prove that a named morph actually deforms the intended region.
+
 The current runtime may use procedural jaw movement when suitable morphs are missing. That fallback is a compatibility path, not acceptance for the production asset.
 
 ## Blender export workflow
@@ -65,6 +67,7 @@ The current runtime may use procedural jaw movement when suitable morphs are mis
    ```bash
    python3 tools/audit_glb.py /path/to/assistant-candidate.glb \
      --require-skin --require-animation --require-morph-targets \
+     --require-morph-names "jawOpen,A,E,O,U,MBP,F,L,WQ,smile,blinkLeft,blinkRight" \
      --json-out assistant-candidate-audit.json
    ``
 8. Run Khronos glTF Validator against the same candidate and resolve all errors; review warnings individually.
