@@ -31,17 +31,23 @@ def validate_manifest(manifest: Any, repo_root: Path) -> list[str]:
         if rel.is_absolute() or ".." in rel.parts:
             errors.append("asset_path must not be absolute or contain '..' path segments")
         else:
-            asset = repo_root / rel
-            if not asset.is_file():
-                errors.append(f"asset file does not exist: {asset_path}")
+            root = repo_root.resolve()
+            asset = (root / rel).resolve()
+            try:
+                asset.relative_to(root)
+            except ValueError:
+                errors.append("asset_path must resolve inside the repository root")
             else:
-                expected_hash = manifest.get("sha256")
-                if not isinstance(expected_hash, str) or not SHA256_RE.fullmatch(expected_hash):
-                    errors.append("sha256 must contain exactly 64 hexadecimal characters")
+                if not asset.is_file():
+                    errors.append(f"asset file does not exist: {asset_path}")
                 else:
-                    actual_hash = hashlib.sha256(asset.read_bytes()).hexdigest()
-                    if actual_hash.lower() != expected_hash.lower():
-                        errors.append("sha256 does not match the asset file")
+                    expected_hash = manifest.get("sha256")
+                    if not isinstance(expected_hash, str) or not SHA256_RE.fullmatch(expected_hash):
+                        errors.append("sha256 must contain exactly 64 hexadecimal characters")
+                    else:
+                        actual_hash = hashlib.sha256(asset.read_bytes()).hexdigest()
+                        if actual_hash.lower() != expected_hash.lower():
+                            errors.append("sha256 does not match the asset file")
 
     source = manifest.get("source")
     if not isinstance(source, dict):
