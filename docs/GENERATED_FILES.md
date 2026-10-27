@@ -2,7 +2,7 @@
 
 This folder contains source assets and guides produced during the Nova hybrid Meshy + Blender prototyping process.
 
-- `blender/build_nova_prototype.py`: creates a low-detail procedural placeholder with an armature and candidate animation actions; it is not the final Meshy character.
+- `blender/build_nova_prototype.py`: creates a low-detail procedural placeholder with an armature, candidate animation actions, and basic head/mouth/blink shape keys; it is not the final Meshy character.
 - `blender/audit_nova_scene.py`: reports mesh, armature, action, vertex-group and shape-key presence from a Blender scene.
 - `docs/MESHY_PROMPT.md`: starting prompt and production steps for creating Nova's base character.
 - `docs/BLENDER_PROTOTYPE.md`: generation instructions and explicit limitations.
