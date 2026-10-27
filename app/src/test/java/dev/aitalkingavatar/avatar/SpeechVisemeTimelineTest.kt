@@ -117,4 +117,23 @@ class SpeechVisemeTimelineTest {
         )
     }
 
+
+    @Test fun nonFiniteMorphWeightsAreNeutralized() {
+        val timeline = SpeechVisemeTimeline(listOf(
+            VisemeFrame(0L, mapOf("A" to Float.NaN, "O" to Float.POSITIVE_INFINITY, "U" to Float.NEGATIVE_INFINITY))
+        ))
+        val sampled = timeline.sample(0L)
+        assertEquals(0f, sampled["A"]!!, 0f)
+        assertEquals(0f, sampled["O"]!!, 0f)
+        assertEquals(0f, sampled["U"]!!, 0f)
+        assertTrue(sampled.values.all { it.isFinite() && it in 0f..1f })
+    }
+
+    @Test fun nonFiniteSpeechRateFallsBackToNormalRate() {
+        val normal = SpeechVisemeTimeline.estimateFromText("Nova", 1f).last().timeMs
+        assertEquals(normal, SpeechVisemeTimeline.estimateFromText("Nova", Float.NaN).last().timeMs)
+        assertEquals(normal, SpeechVisemeTimeline.estimateFromText("Nova", Float.POSITIVE_INFINITY).last().timeMs)
+        assertEquals(normal, SpeechVisemeTimeline.estimateFromText("Nova", Float.NEGATIVE_INFINITY).last().timeMs)
+    }
+
 }
