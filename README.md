@@ -6,7 +6,7 @@ AI Talking Avatar (Nova) is a local-first Android application built with **Kotli
 ## Key features
 - **Real-time 3D rendering:** Filament and glTF loading for binary `.glb` assets, with rendering and lifecycle management.
 - **AI engine adapters:** Offline demo, local Ollama endpoint, LiteRT-LM CLI adapter and optional Gemini API adapter.
-- **Voice and speech:** Speech recognition and Android Text-to-Speech, with approximate mouth motion where supported.
+- **Voice and speech:** Speech recognition and Android Text-to-Speech, with a heuristic text-driven viseme timeline and approximate jaw fallback; phoneme-accurate timing is not yet available.
 - **Avatar state mapping:** Idle, listening, thinking, speaking, error and paused states; clip selection depends on clips actually present in the asset.
 - **Settings and diagnostics:** AI/provider configuration, rendering options, permissions and diagnostic summaries.
 
@@ -18,6 +18,8 @@ python3 tools/audit_glb.py /path/to/nova.glb --json-out nova-audit.json
 ```
 
 For production acceptance, also use Blender, the Khronos glTF Validator, and actual Android/Pixel playback tests. Structural inspection alone does not verify animation quality, skin deformation or phoneme-accurate lip-sync.
+
+See [Timed Viseme Timeline](docs/SPEECH_VISEME_TIMELINE.md) for the integration API and its alignment limitations.
 
 ## Build and test
 - Build debug APK: `gradle assembleDebug`
