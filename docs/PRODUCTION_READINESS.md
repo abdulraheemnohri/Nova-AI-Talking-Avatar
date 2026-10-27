@@ -2,35 +2,41 @@
 
 ## Current status
 
-The repository contains a source-level Blender prototype generator, a scene-audit script, a Meshy prompt, and workflow documentation. These files are a starting point for creating and validating the avatar asset; they are not evidence that a final character asset has been generated or tested on a device.
+The repository now has an Android debug build/test workflow, a Blender prototype export workflow, a structural GLB audit, and heuristic speech-viseme playback. The generated Blender model is a **stylized pipeline-test prototype**, not the final realistic Nova character.
 
-## Confirmed in source control
+## Implemented and verified in GitHub Actions
 
-- Blender prototype generator: `blender/build_nova_prototype.py`
-- Blender scene audit: `blender/audit_nova_scene.py`
-- Meshy prompt and hybrid pipeline documentation
-- Lightweight GitHub Actions checks for Python syntax and required pipeline files
+- Android debug APK build and JVM unit tests pass on the recorded PR validation run.
+- Python source checks and structural GLB audit tests pass.
+- Blender prototype generation and structural audit pass; CI produces a temporary downloadable GLB artifact.
+- The GLB preflight checks container header/JSON chunk bounds before loading.
+- The Filament renderer maps recognized facial morph targets and samples a timestamped viseme timeline.
+- Android Text-to-Speech triggers a heuristic text-driven viseme timeline; this is not phoneme-accurate audio alignment.
+- The prototype has basic jaw/mouth/blink shape keys and named animation actions.
 
-## Not yet verified
+See [Validation Report](../VALIDATION_REPORT.md) and [Blender CI](BLENDER_CI.md) for recorded evidence and artifact links. Artifact retention is limited; rerun the workflow to regenerate expired artifacts.
 
-- A production-quality, fully rigged Nova character
-- A final exported `assistant.glb` / `.glb` asset with facial morph targets
-- Successful execution of the generator in a supported Blender version
-- GLB import and rendering in the Android application
-- A TTS/alignment layer that supplies timed visemes automatically; the renderer currently accepts caller-supplied timelines and retains approximate jaw motion as fallback
-- Real-time audio-driven lip sync and viseme timing on a Pixel device
-- Performance, thermal, memory, and battery measurements on target hardware
+## Not yet verified / production blockers
 
-## Acceptance gates before calling this production-ready
+- A final, realistic, properly licensed, rigged `assistant.glb` is not yet present as a verified repository asset.
+- The stylized CI prototype has not been approved as the shipping character.
+- Khronos glTF Validator has not been run against the final production asset.
+- Heuristic text-to-viseme timing is not aligned to the actual TTS audio and may drift.
+- No physical Pixel 6 run has verified rendering, model replacement, lifecycle behavior, frame pacing, memory, thermal behavior, or battery usage.
+- Release build reproducibility, signing, and installation have not been validated.
 
-1. Generate or obtain a properly licensed character model with a humanoid armature and facial controls.
-2. Open the source scene in the documented Blender version and run the scene audit.
-3. Export a GLB and run the repository's GLB inspection/validation tools.
-4. Verify required nodes, animations, skinning, and morph targets in the exported asset.
-5. Integrate the asset with the Android renderer and confirm graceful error handling when the asset is missing or invalid.
-6. Connect a real TTS/alignment source to the timed viseme API; validate timing against actual speech audio.
-7. Test on a physical Android device, recording frame rate, load time, memory use, and thermal behavior. Unit tests alone do not prove perceptual lip-sync quality.
+## Acceptance gates before release
 
-## CI scope
+1. Generate or obtain a properly licensed realistic character with a humanoid armature and useful facial controls.
+2. Open the source scene in the documented Blender version and inspect the rig and animations visually.
+3. Export the production GLB and run the repository audit plus Khronos glTF Validator.
+4. Confirm required nodes, animation clips, skinning, morph-target names, and deformation quality.
+5. Load and animate the production asset in the Android app.
+6. Replace heuristic viseme estimates with timestamps from a TTS provider or alignment component when accurate lip-sync is required; compare motion against recorded speech.
+7. Test on a physical Pixel 6, recording model-load time, sustained frame rate, memory, thermal behavior, and lifecycle transitions.
+8. Build and sign a release APK using documented, reproducible steps.
 
-The GitHub Actions workflow checks Python syntax and required files. It intentionally does not claim to run Blender, build the Android app, validate a GLB, or run on-device tests. Those require additional dependencies, a real asset, and suitable test infrastructure.
+## CI scope and evidence
+
+The repository workflows now do more than source checks: they build/test the Android debug app and generate/audit the stylized Blender prototype. These are runner-level checks, not physical-device tests. A passing structural audit does not prove that a model looks realistic, that its rig deforms well, or that mouth motion matches audio.
+
