@@ -38,6 +38,7 @@ def inspect(path: Path) -> dict:
         "morph_target_names": [],
         "named_morph_targets": [],
         "missing_required_morph_targets": [],
+        "morph_name_count_mismatches": [],
         "material_count": 0,
         "embedded_image_count": 0,
         "warnings": [],
@@ -120,14 +121,28 @@ def inspect(path: Path) -> dict:
         for name in target_names:
             if isinstance(name, str) and name not in report["named_morph_targets"]:
                 report["named_morph_targets"].append(name)
-        for primitive in mesh.get("primitives", []):
+        primitives = mesh.get("primitives", [])
+        for primitive_index, primitive in enumerate(primitives):
             targets = primitive.get("targets", [])
+            if target_names and len(target_names) != len(targets):
+                mismatch = {
+                    "mesh": mesh.get("name") or "unnamed_mesh",
+                    "primitive_index": primitive_index,
+                    "named_morph_count": len(target_names),
+                    "primitive_target_count": len(targets),
+                }
+                report["morph_name_count_mismatches"].append(mismatch)
             if targets:
                 report["morph_target_mesh_primitives"] += 1
                 for target in targets:
                     for attribute in target:
                         if attribute not in report["morph_target_names"]:
                             report["morph_target_names"].append(attribute)
+
+    if report["morph_name_count_mismatches"]:
+        report["errors"].append(
+            "Named morph target count does not match primitive target count for one or more meshes."
+        )
 
     if not meshes:
         report["warnings"].append("No meshes found.")

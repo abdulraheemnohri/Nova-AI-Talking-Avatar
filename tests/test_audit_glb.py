@@ -70,6 +70,21 @@ class AuditGlbTests(unittest.TestCase):
         self.assertCountEqual(report["named_morph_targets"], ["jawOpen", "A", "blinkLeft"])
         self.assertEqual(report["missing_required_morph_targets"], [])
 
+    def test_named_morph_count_mismatch_is_rejected(self):
+        doc = {
+            "meshes": [{
+                "name": "Face",
+                "extras": {"targetNames": ["jawOpen", "A", "blinkLeft"]},
+                "primitives": [{"targets": [{"POSITION": 3}, {"POSITION": 4}]}],
+            }]
+        }
+        report = audit_glb.inspect(self.write_temp(make_glb(doc)))
+        self.assertEqual(len(report["morph_name_count_mismatches"]), 1)
+        self.assertEqual(report["morph_name_count_mismatches"][0]["named_morph_count"], 3)
+        self.assertEqual(report["morph_name_count_mismatches"][0]["primitive_target_count"], 2)
+        self.assertFalse(report["structurally_usable_candidate"])
+        self.assertTrue(any("count does not match" in e for e in report["errors"]))
+
     def test_cli_fails_when_required_morph_name_is_missing(self):
         doc = {
             "meshes": [{
