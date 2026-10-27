@@ -12,6 +12,7 @@ import dev.aitalkingavatar.ai.ConnectionResult
 import dev.aitalkingavatar.ai.OfflineDemoAdapter
 import dev.aitalkingavatar.ai.OllamaAdapter
 import dev.aitalkingavatar.avatar.AvatarState
+import dev.aitalkingavatar.avatar.VisemeFrame
 import dev.aitalkingavatar.data.AiProviderType
 import dev.aitalkingavatar.data.AvatarPreferences
 import dev.aitalkingavatar.data.ChatMessage
@@ -46,7 +47,9 @@ import java.util.UUID
     val characterStatus: String = "Import a licensed rigged GLB character to begin",
     val cameraResetVersion: Int = 0,
     val diagnosticEvents: List<String> = emptyList(),
-    val characterReloadVersion: Int = 0
+    val characterReloadVersion: Int = 0,
+    val visemeFrames: List<VisemeFrame> = emptyList(),
+    val visemeTimelineVersion: Int = 0
 ) {
     val activeConversation: Conversation? get() = conversations.firstOrNull { it.id == activeConversationId }
     val messages: List<ChatMessage> get() = activeConversation?.messages.orEmpty()
@@ -64,11 +67,16 @@ class AvatarViewModel(application: Application) : AndroidViewModel(application) 
     private val speaker = AndroidSpeechOutput(
         context = application,
         onStarted = { state = state.copy(avatarState = AvatarState.SPEAKING, status = "Speaking") },
+        onVisemeTimeline = { frames ->
+            state = state.copy(visemeFrames = frames, visemeTimelineVersion = state.visemeTimelineVersion + 1)
+        },
         onFinished = { message ->
             state = state.copy(
                 avatarState = if (message == null) AvatarState.IDLE else AvatarState.ERROR,
                 status = message ?: "Ready",
-                error = message ?: state.error
+                error = message ?: state.error,
+                visemeFrames = emptyList(),
+                visemeTimelineVersion = state.visemeTimelineVersion + 1
             )
         }
     )
