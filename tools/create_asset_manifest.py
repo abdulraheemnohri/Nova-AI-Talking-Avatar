@@ -96,6 +96,9 @@ def main() -> int:
         output = (root / output_rel).resolve()
         if output != root and root not in output.parents:
             raise ValueError("output path resolves outside the repository")
+        _, asset_target = repo_relative_file(root, args.asset)
+        if output == asset_target:
+            raise ValueError("output path must not overwrite the source asset")
         if output.exists() and not args.force:
             raise ValueError(f"output already exists: {output_rel}; use --force to replace it")
         manifest = build_manifest(args, root)
