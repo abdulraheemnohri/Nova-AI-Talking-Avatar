@@ -207,5 +207,28 @@ class AuditGlbTests(unittest.TestCase):
         self.assertTrue(any("Multiple JSON chunks" in e for e in report["errors"]))
 
 
+    def test_malformed_collection_shapes_are_reported_without_crashing(self):
+        doc = {
+            "meshes": {"not": "an array"},
+            "animations": ["not an animation object"],
+            "materials": None,
+        }
+        report = audit_glb.inspect(self.write_temp(make_glb(doc)))
+        self.assertFalse(report["structurally_usable_candidate"])
+        self.assertTrue(any("field 'meshes' must be an array" in e for e in report["errors"]))
+        self.assertTrue(any("animations[0]' must be an object" in e for e in report["errors"]))
+        self.assertTrue(any("field 'materials' must be an array" in e for e in report["errors"]))
+
+    def test_malformed_primitive_and_morph_shapes_are_reported_without_crashing(self):
+        doc = {"meshes": [{
+            "extras": {"targetNames": "not-an-array"},
+            "primitives": [{"targets": [{"POSITION": 0}, "not-a-target"]}],
+        }]}
+        report = audit_glb.inspect(self.write_temp(make_glb(doc)))
+        self.assertFalse(report["structurally_usable_candidate"])
+        self.assertTrue(any("targetNames' must be an array" in e for e in report["errors"]))
+        self.assertTrue(any("targets[1]' must be an object" in e for e in report["errors"]))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
