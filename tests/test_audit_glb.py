@@ -42,6 +42,23 @@ class AuditGlbTests(unittest.TestCase):
         self.assertTrue(report["structurally_usable_candidate"])
         self.assertEqual(report["errors"], [])
 
+    def test_trailing_incomplete_chunk_header_is_rejected(self):
+        data = make_glb({"meshes": [{}]}) + b"\x00\x00\x00\x00"
+        report = audit_glb.inspect(self.write_temp(data))
+        self.assertFalse(report["structurally_usable_candidate"])
+        self.assertTrue(any("complete GLB chunk header" in e for e in report["errors"]))
+
+    def test_unaligned_chunk_length_is_rejected(self):
+        data = make_glb({"meshes": [{}]})
+        # The JSON chunk header starts at byte 12; set its length to a non-multiple of four.
+        malformed = bytearray(data)
+        original_length = struct.unpack_from("<I", malformed, 12)[0]
+        struct.pack_into("<I", malformed, 12, original_length - 1)
+        # Keep the declared file length intact; the leftover byte must be caught as malformed structure.
+        report = audit_glb.inspect(self.write_temp(bytes(malformed)))
+        self.assertFalse(report["structurally_usable_candidate"])
+        self.assertTrue(report["errors"])
+
     def test_non_object_json_root_is_rejected_without_crashing(self):
         report = audit_glb.inspect(self.write_temp(make_glb(["not", "a", "glTF document"])))
         self.assertFalse(report["structurally_usable_candidate"])
