@@ -97,6 +97,10 @@ def inspect(path: Path) -> dict:
         report["errors"].append("No readable JSON chunk found.")
         return report
 
+    if not isinstance(document, dict):
+        report["errors"].append("GLB JSON chunk root must be an object.")
+        return report
+
     meshes = document.get("meshes", [])
     nodes = document.get("nodes", [])
     skins = document.get("skins", [])
