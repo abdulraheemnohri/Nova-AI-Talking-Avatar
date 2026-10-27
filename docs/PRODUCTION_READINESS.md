@@ -17,6 +17,7 @@ The repository contains a source-level Blender prototype generator, a scene-audi
 - A final exported `assistant.glb` / `.glb` asset with facial morph targets
 - Successful execution of the generator in a supported Blender version
 - GLB import and rendering in the Android application
+- A TTS/alignment layer that supplies timed visemes automatically; the renderer currently accepts caller-supplied timelines and retains approximate jaw motion as fallback
 - Real-time audio-driven lip sync and viseme timing on a Pixel device
 - Performance, thermal, memory, and battery measurements on target hardware
 
@@ -27,8 +28,8 @@ The repository contains a source-level Blender prototype generator, a scene-audi
 3. Export a GLB and run the repository's GLB inspection/validation tools.
 4. Verify required nodes, animations, skinning, and morph targets in the exported asset.
 5. Integrate the asset with the Android renderer and confirm graceful error handling when the asset is missing or invalid.
-6. Test on a physical Android device, recording frame rate, load time, memory use, and thermal behavior.
-7. Validate viseme mapping against actual speech audio; unit tests alone do not prove perceptual lip-sync quality.
+6. Connect a real TTS/alignment source to the timed viseme API; validate timing against actual speech audio.
+7. Test on a physical Android device, recording frame rate, load time, memory use, and thermal behavior. Unit tests alone do not prove perceptual lip-sync quality.
 
 ## CI scope
 
