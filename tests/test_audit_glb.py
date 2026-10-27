@@ -174,5 +174,38 @@ class AuditGlbTests(unittest.TestCase):
         self.assertEqual(report["missing_required_animation_names"], [])
 
 
+    def test_rejects_non_json_first_chunk(self):
+        document = json.dumps({"meshes": [{}]}, separators=(",", ":")).encode("utf-8")
+        document += b" " * ((4 - len(document) % 4) % 4)
+        binary_chunk = struct.pack("<II", len(document), audit_glb.BIN_CHUNK) + document
+        data = struct.pack("<III", audit_glb.GLB_MAGIC, 2, 12 + len(binary_chunk)) + binary_chunk
+        report = audit_glb.inspect(self.write_temp(data))
+        self.assertFalse(report["structurally_usable_candidate"])
+        self.assertTrue(any("first GLB chunk must be the JSON" in e for e in report["errors"]))
+
+    def test_rejects_trailing_incomplete_chunk_header(self):
+        valid = make_glb({"meshes": [{}]})
+        data = valid + b"\\x01\\x02"
+        # Keep declared length consistent so this specifically exercises chunk framing.
+        data = struct.pack("<III", audit_glb.GLB_MAGIC, 2, len(data)) + data[12:]
+        report = audit_glb.inspect(self.write_temp(data))
+        self.assertFalse(report["structurally_usable_candidate"])
+        self.assertTrue(any("Trailing incomplete GLB chunk" in e for e in report["errors"]))
+
+    def test_rejects_duplicate_json_chunks(self):
+        first_doc = json.dumps({"meshes": [{}]}, separators=(",", ":")).encode("utf-8")
+        first_doc += b" " * ((4 - len(first_doc) % 4) % 4)
+        second_doc = json.dumps({"meshes": [{}]}, separators=(",", ":")).encode("utf-8")
+        second_doc += b" " * ((4 - len(second_doc) % 4) % 4)
+        chunks = (
+            struct.pack("<II", len(first_doc), audit_glb.JSON_CHUNK) + first_doc
+            + struct.pack("<II", len(second_doc), audit_glb.JSON_CHUNK) + second_doc
+        )
+        data = struct.pack("<III", audit_glb.GLB_MAGIC, 2, 12 + len(chunks)) + chunks
+        report = audit_glb.inspect(self.write_temp(data))
+        self.assertFalse(report["structurally_usable_candidate"])
+        self.assertTrue(any("Multiple JSON chunks" in e for e in report["errors"]))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
