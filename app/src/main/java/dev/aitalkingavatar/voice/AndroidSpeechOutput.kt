@@ -30,6 +30,7 @@ class AndroidSpeechOutput(
             if (ready) {
                 engine?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                     override fun onStart(utteranceId: String?) {
+                        if (utteranceId != activeUtteranceId) return
                         onVisemeTimeline(activeVisemes)
                         onStarted()
                     }
