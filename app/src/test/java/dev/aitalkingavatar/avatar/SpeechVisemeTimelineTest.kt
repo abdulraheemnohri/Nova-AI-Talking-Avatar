@@ -2,6 +2,7 @@ package dev.aitalkingavatar.avatar
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SpeechVisemeTimelineTest {
@@ -44,5 +45,14 @@ class SpeechVisemeTimelineTest {
         assertEquals("jawOpen", SpeechVisemeTimeline.canonicalName("jaw_open"))
         assertEquals("MBP", SpeechVisemeTimeline.canonicalName("viseme_MBP"))
         assertEquals("blinkLeft", SpeechVisemeTimeline.canonicalName("EyeBlinkLeft"))
+    }
+
+    @Test fun textEstimatorReturnsTimedFramesAndNeutralEnding() {
+        val frames = SpeechVisemeTimeline.estimateFromText("Nova", 1f)
+        assertTrue(frames.size > 2)
+        assertTrue(frames.zipWithNext().all { (a, b) -> a.timeMs <= b.timeMs })
+        assertEquals(0f, frames.last().weights["jawOpen"]!!, 0f)
+        assertTrue(frames.any { it.weights.containsKey("O") })
+        assertTrue(frames.any { it.weights.containsKey("A") })
     }
 }
