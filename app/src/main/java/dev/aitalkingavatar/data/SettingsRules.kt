@@ -1,6 +1,9 @@
 package dev.aitalkingavatar.data
 
 object SettingsRules {
+    private fun boundedFinite(value: Float, fallback: Float, min: Float, max: Float): Float =
+        (if (value.isFinite()) value else fallback).coerceIn(min, max)
+
     fun normalize(input: AvatarPreferences): AvatarPreferences {
         val trimmedOllama = input.ollamaEndpoint.trim()
         val safeOllama = when (EndpointRules.validate(trimmedOllama, allowInsecureHttp = true)) {
@@ -21,9 +24,9 @@ object SettingsRules {
             geminiModel = input.geminiModel.trim().ifBlank { "gemini-3.5-flash" },
             voiceLocale = input.voiceLocale.trim().ifBlank { "en-US" },
             voiceName = input.voiceName.trim(),
-            speechRate = input.speechRate.coerceIn(0.5f, 2f),
-            pitch = input.pitch.coerceIn(0.5f, 2f),
-            cameraZoom = input.cameraZoom.coerceIn(0.5f, 2f)
+            speechRate = boundedFinite(input.speechRate, 1f, 0.5f, 2f),
+            pitch = boundedFinite(input.pitch, 1f, 0.5f, 2f),
+            cameraZoom = boundedFinite(input.cameraZoom, 1f, 0.5f, 2f)
         )
     }
 }
