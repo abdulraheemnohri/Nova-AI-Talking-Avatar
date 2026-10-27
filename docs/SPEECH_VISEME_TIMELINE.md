@@ -27,7 +27,7 @@ Only morph targets present in the imported GLB can move. Use the semantic names 
 
 ## Important limitation
 
-The renderer does **not** derive phoneme timestamps from generated text or Android TTS audio. The caller must provide timed viseme frames from a TTS engine that exposes alignment, a forced-aligner, or an external animation authoring step. The current Android TTS flow still uses approximate procedural jaw movement unless a timeline is explicitly supplied. A timeline unit test proves interpolation logic, not perceptual lip-sync.
+The renderer does **not** derive phoneme timestamps from generated text or Android TTS audio. The caller must provide timed viseme frames from a TTS engine that exposes alignment, a forced-aligner, or an external animation authoring step. The current Android TTS flow automatically supplies the heuristic text timeline; if no facial morph targets are present, the renderer falls back to approximate procedural jaw movement. A timeline unit test proves interpolation logic, not perceptual lip-sync.
 
 ## Validation
 
