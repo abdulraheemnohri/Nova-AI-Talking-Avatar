@@ -138,6 +138,41 @@ class AuditGlbTests(unittest.TestCase):
         self.assertFalse(report["exists"])
         self.assertTrue(report["errors"])
 
+    def test_cli_fails_when_required_animation_name_is_missing(self):
+        doc = {
+            "meshes": [{"primitives": [{"attributes": {"POSITION": 0}}]}],
+            "animations": [{"name": "Nova_Idle"}, {"name": "Nova_Speaking"}],
+        }
+        glb = self.write_temp(make_glb(doc))
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "tools" / "audit_glb.py"), str(glb),
+             "--require-animation-names",
+             "Nova_Idle,Nova_Listening,Nova_Thinking,Nova_Greeting,Nova_Speaking"],
+            capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(result.returncode, 1)
+        report = json.loads(result.stdout)
+        self.assertEqual(
+            report["missing_required_animation_names"],
+            ["Nova_Listening", "Nova_Thinking", "Nova_Greeting"],
+        )
+
+    def test_cli_passes_when_all_required_animation_names_exist(self):
+        names = ["Nova_Idle", "Nova_Listening", "Nova_Thinking", "Nova_Greeting", "Nova_Speaking"]
+        doc = {
+            "meshes": [{"primitives": [{"attributes": {"POSITION": 0}}]}],
+            "animations": [{"name": name} for name in names],
+        }
+        glb = self.write_temp(make_glb(doc))
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "tools" / "audit_glb.py"), str(glb),
+             "--require-animation-names", ",".join(names)],
+            capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["missing_required_animation_names"], [])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
