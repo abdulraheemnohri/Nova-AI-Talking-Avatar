@@ -17,7 +17,8 @@ class SpeechVisemeTimeline(frames: List<VisemeFrame>) {
             )
         }
         .sortedBy { it.timeMs }
-        .distinctBy { it.timeMs }
+        .groupBy { it.timeMs }
+        .map { (_, sameTime) -> sameTime.last() }
 
     fun sample(timeMs: Long): Map<String, Float> {
         if (frames.isEmpty()) return emptyMap()
