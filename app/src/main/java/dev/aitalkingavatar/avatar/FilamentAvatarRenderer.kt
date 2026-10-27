@@ -90,7 +90,10 @@ class FilamentAvatarRenderer(private val surface: SurfaceView) {
         Choreographer.getInstance().removeFrameCallback(frameCallback)
     }
 
-    fun setState(state: AvatarState) { avatarState = state }
+    fun setState(state: AvatarState) {
+        avatarState = state
+        if (state != AvatarState.SPEAKING) speechTimeline = null
+    }
 
     /**
      * Start speech motion from caller-supplied timestamped visemes.
