@@ -42,6 +42,11 @@ class AuditGlbTests(unittest.TestCase):
         self.assertTrue(report["structurally_usable_candidate"])
         self.assertEqual(report["errors"], [])
 
+    def test_non_object_json_root_is_rejected_without_crashing(self):
+        report = audit_glb.inspect(self.write_temp(make_glb(["not", "a", "glTF document"])))
+        self.assertFalse(report["structurally_usable_candidate"])
+        self.assertTrue(any("root must be an object" in e for e in report["errors"]))
+
     def test_invalid_magic_is_rejected(self):
         report = audit_glb.inspect(self.write_temp(make_glb({"meshes": [{}]}, magic=0)))
         self.assertFalse(report["valid_glb_header"])
