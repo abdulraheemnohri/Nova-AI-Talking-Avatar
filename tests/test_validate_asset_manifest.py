@@ -61,6 +61,21 @@ class AssetManifestValidationTests(unittest.TestCase):
             self.errors(self.manifest),
         )
 
+    def test_rejects_symlink_resolving_outside_repository_root(self) -> None:
+        outside = self.root.parent / (self.root.name + "-outside.glb")
+        outside.write_bytes(b"outside-payload")
+        link = self.asset.parent / "external.glb"
+        try:
+            link.symlink_to(outside)
+            self.manifest["asset_path"] = str(link.relative_to(self.root))
+            self.manifest["sha256"] = hashlib.sha256(outside.read_bytes()).hexdigest()
+            self.assertIn(
+                "asset_path must resolve inside the repository root",
+                self.errors(self.manifest),
+            )
+        finally:
+            outside.unlink(missing_ok=True)
+
     def test_requires_explicit_redistribution_permission(self) -> None:
         self.manifest["license"]["redistribution_allowed"] = False
         self.assertIn(
