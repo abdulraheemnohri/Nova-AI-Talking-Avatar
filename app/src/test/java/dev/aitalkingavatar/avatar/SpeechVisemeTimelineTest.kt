@@ -76,4 +76,45 @@ class SpeechVisemeTimelineTest {
         val sentenceEnd = SpeechVisemeTimeline.estimateFromText("a.", 1f).last().timeMs
         assertTrue(sentenceEnd > comma + 80L)
     }
+
+    @Test fun emptyTimelineSamplesAsEmptyMap() {
+        assertEquals(emptyMap<String, Float>(), SpeechVisemeTimeline(emptyList()).sample(0L))
+    }
+
+    @Test fun negativeFrameTimesAreNormalizedToZero() {
+        val timeline = SpeechVisemeTimeline(listOf(
+            VisemeFrame(-100L, mapOf("jawOpen" to 0.25f)),
+            VisemeFrame(50L, mapOf("jawOpen" to 0.75f))
+        ))
+        assertEquals(0L, timeline.frames.first().timeMs)
+        assertEquals(0.25f, timeline.sample(0L)["jawOpen"]!!, 0f)
+    }
+
+    @Test fun absentMorphWeightsFadeToNeutralDuringInterpolation() {
+        val timeline = SpeechVisemeTimeline(listOf(
+            VisemeFrame(0L, mapOf("jawOpen" to 1f, "A" to 0.8f)),
+            VisemeFrame(100L, mapOf("jawOpen" to 0f))
+        ))
+        val middle = timeline.sample(50L)
+        assertEquals(0.5f, middle["jawOpen"]!!, 0.0001f)
+        assertEquals(0.4f, middle["A"]!!, 0.0001f)
+        assertEquals(0f, timeline.sample(100L)["A"] ?: 0f, 0f)
+    }
+
+    @Test fun estimatorClampsSpeechRateAndBoundsVeryLongInput() {
+        val slow = SpeechVisemeTimeline.estimateFromText("a", 0f)
+        val minimumRate = SpeechVisemeTimeline.estimateFromText("a", 0.5f)
+        assertEquals(minimumRate.last().timeMs, slow.last().timeMs)
+
+        val fast = SpeechVisemeTimeline.estimateFromText("a", 99f)
+        val maximumRate = SpeechVisemeTimeline.estimateFromText("a", 2f)
+        assertEquals(maximumRate.last().timeMs, fast.last().timeMs)
+
+        val longFrames = SpeechVisemeTimeline.estimateFromText("a".repeat(4000))
+        assertEquals(
+            SpeechVisemeTimeline.estimateFromText("a".repeat(3500)).last().timeMs,
+            longFrames.last().timeMs
+        )
+    }
+
 }
