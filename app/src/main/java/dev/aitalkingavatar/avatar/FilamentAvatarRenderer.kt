@@ -33,7 +33,9 @@ class FilamentAvatarRenderer(private val surface: SurfaceView) {
     private var stateStartNanos = System.nanoTime()
     private var activeClip: ClipSelection = ClipSelection(null, null, false)
     private var clipNames: List<String> = emptyList()
-    private var morphBindings: List<Pair<Int, Int>> = emptyList()
+    private var morphBindings: List<Triple<Int, Int, String>> = emptyList()
+    private var speechTimeline: SpeechVisemeTimeline? = null
+    private var speechTimelineStartNanos = 0L
     private var talkNodes: List<Int> = emptyList()
     private var baseTalkTransforms: Map<Int, FloatArray> = emptyMap()
     private var modelFile: File? = null
@@ -90,6 +92,22 @@ class FilamentAvatarRenderer(private val surface: SurfaceView) {
 
     fun setState(state: AvatarState) { avatarState = state }
 
+    /**
+     * Start speech motion from caller-supplied timestamped visemes.
+     * Phoneme alignment is deliberately left to a TTS/alignment layer.
+     */
+    fun playVisemeTimeline(frames: List<VisemeFrame>) {
+        if (disposed || frames.isEmpty()) return
+        speechTimeline = SpeechVisemeTimeline(frames)
+        speechTimelineStartNanos = System.nanoTime()
+        stateStartNanos = speechTimelineStartNanos
+        avatarState = AvatarState.SPEAKING
+    }
+
+    fun clearVisemeTimeline() {
+        speechTimeline = null
+    }
+
     fun setQuality(value: GraphicsQuality) { quality = value; applyQuality(value) }
     fun setReducedMotion(value: Boolean) { reducedMotion = value }
 
@@ -137,11 +155,9 @@ class FilamentAvatarRenderer(private val surface: SurfaceView) {
         activeClip = AnimationClipMapper.select(avatarState, clipNames)
         morphBindings = asset.renderableEntities.flatMap { entity ->
             val names = runCatching { asset.getMorphTargetNames(entity).toList() }.getOrDefault(emptyList())
-            val mouthIndex = names.indexOfFirst { name ->
-                val normalized = name.lowercase().replace(Regex("[^a-z0-9]"), "")
-                normalized.contains("jawopen") || normalized.contains("mouthopen") || normalized.contains("visemeaa") || normalized == "aa"
+            names.mapIndexedNotNull { index, name ->
+                SpeechVisemeTimeline.canonicalName(name)?.let { canonical -> Triple(entity, index, canonical) }
             }
-            if (mouthIndex < 0) emptyList() else listOf(entity to mouthIndex)
         }
         val namedNodes = asset.entities.filter { entity ->
             val name = runCatching { asset.getName(entity) }.getOrNull()?.lowercase().orEmpty()
@@ -163,16 +179,25 @@ class FilamentAvatarRenderer(private val surface: SurfaceView) {
         val phase = (frameTimeNanos - stateStartNanos).coerceAtLeast(0).toDouble() / 1_000_000_000.0
         val wave = if (speaking && !reducedMotion) (0.5 + 0.5 * sin(phase * 9.0)).toFloat() else 0f
         if (morphBindings.isNotEmpty()) {
+            val supplied = if (speaking && !reducedMotion) {
+                speechTimeline?.sample((frameTimeNanos - speechTimelineStartNanos).coerceAtLeast(0) / 1_000_000L)
+            } else null
             val manager = viewer.engine.renderableManager
-            morphBindings.forEach { (entity, targetIndex) ->
+            morphBindings.groupBy { it.first }.forEach { (entity, bindings) ->
                 val instance = manager.getInstance(entity)
                 if (instance != 0) {
-                    val count = manager.getMorphTargetCount(instance)
-                    if (targetIndex in 0 until count) {
-                        val weights = FloatArray(count)
-                        weights[targetIndex] = wave * 0.72f
-                        manager.setMorphWeights(instance, weights, 0)
+                    val weights = FloatArray(manager.getMorphTargetCount(instance))
+                    bindings.forEach { (_, targetIndex, canonicalName) ->
+                        if (targetIndex in weights.indices) {
+                            val weight = if (supplied != null) {
+                                supplied[canonicalName] ?: 0f
+                            } else if (canonicalName == "jawOpen") {
+                                wave * 0.72f
+                            } else 0f
+                            weights[targetIndex] = weight.coerceIn(0f, 1f)
+                        }
                     }
+                    manager.setMorphWeights(instance, weights, 0)
                 }
             }
         } else if (speaking && !reducedMotion) {
