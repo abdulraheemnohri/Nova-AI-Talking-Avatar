@@ -30,7 +30,7 @@ object AiProviderFactory {
             AiProviderType.OFFLINE_DEMO -> OfflineDemoAdapter()
             AiProviderType.OLLAMA -> OllamaAdapter(preferences)
             AiProviderType.LITERT_CLI -> LiteRtCliAdapter(
-                endpointUrl = preferences.ollamaEndpoint.ifBlank { preferences.endpoint },
+                endpointUrl = preferences.liteRtEndpoint,
                 modelName = preferences.liteRtModel
             )
             AiProviderType.GEMINI_API -> GeminiAdapter(

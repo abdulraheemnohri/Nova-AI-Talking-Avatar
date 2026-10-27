@@ -12,8 +12,8 @@ import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 class LiteRtCliAdapter(
-    private val endpointUrl: String = "http://localhost:8080",
-    private val modelName: String = "litert-lm-3b"
+    internal val endpointUrl: String = "http://localhost:8080",
+    internal val modelName: String = "litert-lm-3b"
 ) : AiAdapter {
 
     private val client = OkHttpClient.Builder()
