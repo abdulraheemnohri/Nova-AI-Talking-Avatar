@@ -20,7 +20,7 @@ def validate_manifest(manifest: Any, repo_root: Path) -> list[str]:
     if not isinstance(manifest, dict):
         return ["manifest root must be a JSON object"]
 
-    if manifest.get("schema_version") != 1:
+    if type(manifest.get("schema_version")) is not int or manifest.get("schema_version") != 1:
         errors.append("schema_version must be integer 1")
 
     asset_path = manifest.get("asset_path")
@@ -48,7 +48,7 @@ def validate_manifest(manifest: Any, repo_root: Path) -> list[str]:
         errors.append("source must be a JSON object")
     else:
         kind = source.get("kind")
-        if kind not in SOURCE_KINDS:
+        if not isinstance(kind, str) or kind not in SOURCE_KINDS:
             errors.append("source.kind must be one of: " + ", ".join(sorted(SOURCE_KINDS)))
         for key in ("reference", "creator", "created_at"):
             value = source.get(key)
