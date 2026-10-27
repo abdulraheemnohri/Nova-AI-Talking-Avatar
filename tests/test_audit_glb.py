@@ -1,6 +1,7 @@
 """Unit tests for the dependency-free GLB structural preflight."""
 import json
 import struct
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -67,6 +68,43 @@ class AuditGlbTests(unittest.TestCase):
         }
         report = audit_glb.inspect(self.write_temp(make_glb(doc)))
         self.assertCountEqual(report["named_morph_targets"], ["jawOpen", "A", "blinkLeft"])
+        self.assertEqual(report["missing_required_morph_targets"], [])
+
+    def test_cli_fails_when_required_morph_name_is_missing(self):
+        doc = {
+            "meshes": [{
+                "extras": {"targetNames": ["jawOpen", "A"]},
+                "primitives": [{"targets": [{"POSITION": 3}, {"POSITION": 4}]}],
+            }]
+        }
+        glb = self.write_temp(make_glb(doc))
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "tools" / "audit_glb.py"), str(glb),
+             "--require-morph-names", "jawOpen,A,blinkLeft"],
+            capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(result.returncode, 1)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["missing_required_morph_targets"], ["blinkLeft"])
+        self.assertIn("blinkLeft", report["errors"][-1])
+
+    def test_cli_passes_when_all_required_morph_names_exist(self):
+        names = ["jawOpen", "A", "E", "O", "U", "MBP", "F", "L", "WQ",
+                 "smile", "blinkLeft", "blinkRight"]
+        doc = {
+            "meshes": [{
+                "extras": {"targetNames": names},
+                "primitives": [{"targets": [{"POSITION": i} for i in range(len(names))]}],
+            }]
+        }
+        glb = self.write_temp(make_glb(doc))
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "tools" / "audit_glb.py"), str(glb),
+             "--require-morph-targets", "--require-morph-names", ",".join(names)],
+            capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+        report = json.loads(result.stdout)
         self.assertEqual(report["missing_required_morph_targets"], [])
 
     def test_short_file_is_rejected(self):
