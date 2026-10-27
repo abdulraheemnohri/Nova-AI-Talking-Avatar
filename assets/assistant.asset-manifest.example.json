@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "asset_path": "app/src/main/assets/models/assistant.glb",
+  "sha256": "REPLACE_WITH_64_CHARACTER_SHA256_HEX",
+  "source": {
+    "kind": "generated",
+    "reference": "REPLACE_WITH_VERIFIABLE_SOURCE_REFERENCE",
+    "creator": "REPLACE_WITH_CREATOR_OR_PROVIDER",
+    "created_at": "2026-10-27"
+  },
+  "license": {
+    "name": "REPLACE_WITH_ACTUAL_LICENSE_OR_TERMS",
+    "reference": "REPLACE_WITH_LICENSE_REFERENCE",
+    "redistribution_allowed": false,
+    "attribution_required": false,
+    "attribution_text": ""
+  }
+}
